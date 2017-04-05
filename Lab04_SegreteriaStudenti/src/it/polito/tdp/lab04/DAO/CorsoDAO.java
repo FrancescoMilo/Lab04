@@ -1,6 +1,8 @@
 package it.polito.tdp.lab04.DAO;
 
 import java.sql.Connection;
+
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,7 +12,6 @@ import java.util.List;
 
 import it.polito.tdp.lab04.model.Corso;
 import it.polito.tdp.lab04.model.Studente;
-
 public class CorsoDAO {
 
 	/*
@@ -32,6 +33,8 @@ public class CorsoDAO {
 
 				// Crea un nuovo JAVA Bean Corso
 				// Aggiungi il nuovo Corso alla lista
+				Corso c = new Corso(rs.getString("codins"),rs.getInt("crediti"), rs.getString("nome"), rs.getInt("pd"));
+				corsi.add(c);
 			}
 
 			return corsi;
@@ -45,15 +48,51 @@ public class CorsoDAO {
 	/*
 	 * Dato un codice insegnamento, ottengo il corso
 	 */
-	public void getCorso(Corso corso) {
-		// TODO
+	public Corso getCorso(Corso corso) {
+		Corso risultato = null;
+		final String sql = "SELECT * FROM corso WHERE codins = ?";
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, corso.getCodice());
+			ResultSet rs = st.executeQuery();
+
+			if (rs.next()) {
+				risultato = new Corso(rs.getString("codins"),rs.getInt("crediti"),rs.getString("nome"),rs.getInt("pd"));
+			}else{
+				risultato = null;
+			}
+		} catch (SQLException e) {
+			// e.printStackTrace();
+			throw new RuntimeException("Errore Db");
+		}
+		return risultato;
 	}
 
 	/*
 	 * Ottengo tutti gli studenti iscritti al Corso
 	 */
-	public void getStudentiIscrittiAlCorso(Corso corso) {
-		// TODO
+	public List<Studente> getStudentiIscrittiAlCorso(String codins) {
+		List<Studente> iscritti = new LinkedList<Studente>();
+		final String sql = "SELECT matricola FROM iscrizione WHERE codins = ?";
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, codins);
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				String matricolaStudente = rs.getString("matricola");
+				StudenteDAO dao = new StudenteDAO();
+				iscritti.add(dao.getStudente(matricolaStudente));
+			}
+		} catch (SQLException e) {
+			// e.printStackTrace();
+			throw new RuntimeException("Errore Db");
+		}
+		
+		return iscritti;
+		
 	}
 
 	/*
